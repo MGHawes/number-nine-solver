@@ -1,7 +1,7 @@
 import itertools
 
-BOARD_SIZE = 20
-ORIGIN = (0, int(BOARD_SIZE / 2), int(BOARD_SIZE / 2))
+BOARD_SIZE = 9
+ORIGIN = (0, 0, 0)
 LEVELS = 6
 
 # Board Rep.:
@@ -18,13 +18,22 @@ class Board:
             self.board = [[[None for _ in range(BOARD_SIZE)] for _ in range(BOARD_SIZE)] for _ in range(LEVELS)]
             self.score = 0
 
+    def __key(self):
+        return tuple(tuple(tuple(self.board[z][y][x] for x in range(BOARD_SIZE)) for y in range(BOARD_SIZE)) for z in range(LEVELS))
+
+    def __hash__(self):
+        return hash(self.__key())
+
+    def __eq__(self, other):
+        return isinstance(self, type(other)) and self.__key() == other.__key()
+
     def __repr__(self):
-        return "\n".join(" ".join(["-" if i is None else str(i) for i in r]) for r in self.board[0])
+        return "\n".join("   ".join((" ".join(["-" if self.board[l][r][i] is None else str(self.board[l][r][i]) for i in range(BOARD_SIZE)])) for l in range(LEVELS)) for r in range(BOARD_SIZE))
 
     def get_playable_tiles(self):
         playable_tiles = []
-        for (z, x, y) in itertools.product(range(LEVELS), range(BOARD_SIZE), range(BOARD_SIZE)):
-            is_unoccupied = self.board[z][y][x] is not None
+        for (z, y, x) in itertools.product(range(LEVELS), range(BOARD_SIZE), range(BOARD_SIZE)):
+            is_unoccupied = self.board[z][y][x] is None
             if not is_unoccupied:
                 continue
 
@@ -38,7 +47,7 @@ class Board:
                 or (x+1 < BOARD_SIZE and self.board[z][y][x+1] is not None)
                 or (x-1 >= 0 and self.board[z][y][x-1] is not None)
             )
-            if not has_neighbour:
+            if (not has_neighbour) and z == 0:
                 continue
 
             playable_tiles.append((z, y, x))
@@ -54,24 +63,29 @@ class Board:
         if self.board[Z][Y][X] is not None:
             return False
 
-        covering_numbers = set()
+        is_covering_multiple = False
+        covering_number = None
         for relative_location in relative_locations:
             y, x = relative_location
-            if (Y+y >= BOARD_SIZE) or (Y+y < 0) or (X+x >= BOARD_SIZE) or (X+x < 0):
+
+            is_inside_board = (Y+y >= BOARD_SIZE) or (Y+y < 0) or (X+x >= BOARD_SIZE) or (X+x < 0)
+            if is_inside_board:
                 return False
 
             if self.board[Z][Y+y][X+x] is not None:
                 return False
 
-            if (Z != 0) and (self.board[Z-1][Y+y][X+x] is None):
-                return False
-
+            number_underneath = self.board[Z-1][Y+y][X+x]
             if Z != 0:
-                covering_numbers.add(self.board[Z-1][Y+y][X+x])
+                if number_underneath is None:
+                    return False
 
+                if number_underneath != covering_number:
+                    if covering_number is not None:
+                        is_covering_multiple = True
+                    covering_number = number_underneath
 
-
-        if (Z != 0) and (len(covering_numbers) == 1):
+        if (Z != 0) and not is_covering_multiple:
             return False
 
         return True
@@ -83,4 +97,6 @@ class Board:
             y, x = relative_location
             self.board[Z][Y+y][X+x] = number
         # print(self)
+        # if Z > 0:
+        #     print("Playing {} at {}".format(number, play_location))
         self.score += Z * number
