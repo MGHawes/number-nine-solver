@@ -40,3 +40,7 @@ class Board:
             playable_tiles.append((z, x, y))
 
         return playable_tiles
+
+    def is_valid_location(self, coords):
+        z, y, x = coords
+        return self.board[z][y][x] is None
