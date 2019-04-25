@@ -1,6 +1,7 @@
 import itertools
 
 BOARD_SIZE = 16
+ORIGIN = (0, int(BOARD_SIZE / 2), int(BOARD_SIZE / 2))
 LEVELS = 10
 
 # Board Rep.:
@@ -44,3 +45,26 @@ class Board:
     def is_valid_location(self, coords):
         z, y, x = coords
         return self.board[z][y][x] is None
+
+    def is_piece_play_valid(self, play_location, relative_locations):
+        (Z, Y, X) = play_location
+        if self.board[Z][Y][X] is not None:
+            return False
+
+        for relative_location in relative_locations:
+            y, x = relative_location
+            if (Y+y >= BOARD_SIZE) or (Y+y < 0) or (X+x >= BOARD_SIZE) or (X+x < 0):
+                return False
+
+            if self.board[Z][Y+y][X+x] is not None:
+                return False
+
+        return True
+
+    def play_piece(self, play_location, relative_locations, number):
+        (Z, Y, X) = play_location
+        for relative_location in relative_locations:
+            y, x = relative_location
+            self.board[Z][Y+y][X+x] = Z * number
+
+        return True
