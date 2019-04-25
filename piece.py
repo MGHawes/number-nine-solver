@@ -2,8 +2,12 @@ import numpy as np
 PIECE_SIZE = 4
 
 class Piece:
-    def __init__(self, spec):
+    def __init__(self, spec, n):
         self.playable_tiles = Piece._calculate_playable_tiles(spec)
+        self.number = n
+
+    def __repr__(self):
+        return "Piece({})".format(self.number)
 
     @staticmethod
     def _calculate_playable_tiles(spec):
@@ -26,7 +30,7 @@ class Piece:
                     if has_empty_neighbour:
                         origin = (y, x)
                         relative_tiles = Piece._calculate_relative_tiles(origin, piece)
-                        playable_tiles.append(((y, x), relative_tiles))
+                        playable_tiles.append(relative_tiles)
         return playable_tiles
 
     @staticmethod
